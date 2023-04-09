@@ -99,10 +99,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val key = MmkvManager.encodeServerConfig("", config)
         serverRawStorage?.encode(key, server)
         serverList.add(0, key)
-        viewModelScope.launch {
-            _serversCacheFlow.emit(_serversCacheFlow.value + ServersCache(key, config))
+
+        _serversCacheFlow.value = mutableListOf(ServersCache(key, config)).apply {
+            addAll(_serversCacheFlow.value)
         }
-        //serversCache.add(0, ServersCache(key, config))
     }
 
     fun swapServer(fromPosition: Int, toPosition: Int) {

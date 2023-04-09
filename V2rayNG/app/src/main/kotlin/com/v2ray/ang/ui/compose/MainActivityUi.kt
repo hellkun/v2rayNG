@@ -14,10 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.ServersCache
@@ -30,9 +27,10 @@ fun MainActivityScreen(
     isRunning: Boolean,
     testMessage: String,
     configs: List<ServersCache>,
+    onNavigationItemSelect: (MainNavigationDestination) -> Unit,
     onItemClick: (ServersCache, ServerConfigAction) -> Unit,
     onSelectAddMethod: (MainAddOption) -> Unit,
-    onSelectAction: (MainServerConfigAction) -> Unit,
+    onSelectAction: (ConfigManagementAction) -> Unit,
     onFabClick: () -> Unit,
     onStartTest: () -> Unit,
     selectedServerGuid: String? = null,
@@ -41,9 +39,28 @@ fun MainActivityScreen(
     val curOnFabClick by rememberUpdatedState(newValue = onFabClick)
     val curOnStartTest by rememberUpdatedState(newValue = onStartTest)
 
+    // 要分享的ServersCache
+    var sharePendingItem by remember(configs) {
+        mutableStateOf<ServersCache?>(null)
+    }
+
+    if (sharePendingItem != null) {
+        ModalBottomSheet(onDismissRequest = { sharePendingItem = null }) {
+            val curOnShare by rememberUpdatedState(newValue = onItemClick)
+            stringArrayResource(id = R.array.share_method).forEachIndexed { index, s ->
+                ListItem(headlineContent = {
+                    Text(s)
+                }, modifier = Modifier.clickable(onClick = {
+                    curOnShare(sharePendingItem!!, ServerConfigAction.Share(index))
+                    sharePendingItem = null
+                }))
+            }
+        }
+    }
+
     ModalNavigationDrawer(
         modifier = modifier, drawerContent = {
-            MainDrawer()
+            MainDrawer(onNavigationItemSelect)
         }, drawerState = drawerState
     ) {
         Scaffold(topBar = {
@@ -99,7 +116,11 @@ fun MainActivityScreen(
                             server = item,
                             active = item.guid == selectedServerGuid,
                             onSelectAction = {
-                                onItemClick(item, it)
+                                if (it is ServerConfigAction.Share && it.type == -1) {
+                                    sharePendingItem = item
+                                } else {
+                                    onItemClick(item, it)
+                                }
                             })
                         if (index < configs.size - 1) Spacer(modifier = Modifier.height(4.dp))
                     }
@@ -178,7 +199,7 @@ fun ServerConfigItem(
             val iconModifier = Modifier.size(dimensionResource(id = R.dimen.png_height))
             // share
             IconButton(onClick = {
-                curOnSelect(ServerConfigAction.Share)
+                curOnSelect(ServerConfigAction.Share(-1))
             }) {
                 Icon(
                     modifier = iconModifier,
@@ -208,13 +229,19 @@ fun ServerConfigItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainDrawer(modifier: Modifier = Modifier) {
+fun MainDrawer(
+    onNavigationItemSelect: (MainNavigationDestination) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val curOnNavigate by rememberUpdatedState(newValue = onNavigationItemSelect)
+
     ModalDrawerSheet(modifier) {
         NavigationDrawerItem(label = {
             Text(stringResource(id = R.string.title_sub_setting))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
+        }, selected = false, onClick = {
+            curOnNavigate(MainNavigationDestination.SubSettings)
+        }, icon = {
             Icon(
                 painterResource(id = R.drawable.ic_subscriptions_white_24dp),
                 contentDescription = null
@@ -223,7 +250,9 @@ fun MainDrawer(modifier: Modifier = Modifier) {
 
         NavigationDrawerItem(label = {
             Text(stringResource(id = R.string.title_settings))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
+        }, selected = false, onClick = {
+            curOnNavigate(MainNavigationDestination.Settings)
+        }, icon = {
             Icon(
                 painterResource(id = R.drawable.ic_settings_white_24dp), contentDescription = null
             )
@@ -231,7 +260,9 @@ fun MainDrawer(modifier: Modifier = Modifier) {
 
         NavigationDrawerItem(label = {
             Text(stringResource(id = R.string.title_user_asset_setting))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
+        }, selected = false, onClick = {
+            curOnNavigate(MainNavigationDestination.UserAssetSettings)
+        }, icon = {
             Icon(
                 painterResource(id = R.drawable.ic_file_white_24dp), contentDescription = null
             )
@@ -239,29 +270,39 @@ fun MainDrawer(modifier: Modifier = Modifier) {
 
         Divider()
 
-        NavigationDrawerItem(label = {
-            Text(stringResource(id = R.string.title_pref_promotion))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
-            Icon(
-                painterResource(id = R.drawable.ic_whatshot_white_24dp), contentDescription = null
-            )
-        })
+        NavigationDrawerItem(
+            label = {
+                Text(stringResource(id = R.string.title_pref_promotion))
+            },
+            selected = false,
+            onClick = { curOnNavigate(MainNavigationDestination.Promotion) },
+            icon = {
+                Icon(
+                    painterResource(id = R.drawable.ic_whatshot_white_24dp),
+                    contentDescription = null
+                )
+            })
 
         NavigationDrawerItem(label = {
             Text(stringResource(id = R.string.title_logcat))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
+        }, selected = false, onClick = { curOnNavigate(MainNavigationDestination.Logcat) }, icon = {
             Icon(
                 painterResource(id = R.drawable.ic_logcat_white_24dp), contentDescription = null
             )
         })
 
-        NavigationDrawerItem(label = {
-            Text(stringResource(id = R.string.title_pref_feedback))
-        }, selected = false, onClick = { /*TODO*/ }, icon = {
-            Icon(
-                painterResource(id = R.drawable.ic_feedback_white_24dp), contentDescription = null
-            )
-        })
+        NavigationDrawerItem(
+            label = {
+                Text(stringResource(id = R.string.title_pref_feedback))
+            },
+            selected = false,
+            onClick = { curOnNavigate(MainNavigationDestination.Feedback) },
+            icon = {
+                Icon(
+                    painterResource(id = R.drawable.ic_feedback_white_24dp),
+                    contentDescription = null
+                )
+            })
     }
 }
 
@@ -328,7 +369,7 @@ fun MainAddDropdownButton(onSelect: (MainAddOption) -> Unit) {
 }
 
 @Composable
-fun MainOverflowButton(onSelect: (MainServerConfigAction) -> Unit) {
+fun MainOverflowButton(onSelect: (ConfigManagementAction) -> Unit) {
     var expanded by remember {
         mutableStateOf(false)
     }
@@ -342,30 +383,30 @@ fun MainOverflowButton(onSelect: (MainServerConfigAction) -> Unit) {
             expanded = false
         }) {
             val curOnSelect by rememberUpdatedState(newValue = onSelect)
-            MainServerConfigAction.values().forEach {
+            ConfigManagementAction.values().forEach {
                 DropdownMenuItem(text = {
                     Text(
                         stringResource(
                             id = when (it) {
-                                MainServerConfigAction.RestartService -> R.string.title_service_restart
-                                MainServerConfigAction.DeleteAllConfig -> R.string.title_del_all_config
-                                MainServerConfigAction.DeleteDuplicateConfig -> R.string.title_del_duplicate_config
-                                MainServerConfigAction.DeleteInvalidConfig -> R.string.title_del_invalid_config
-                                MainServerConfigAction.ExportAllConfig -> R.string.title_export_all
-                                MainServerConfigAction.PingAllConfig -> R.string.title_ping_all_server
-                                MainServerConfigAction.RealPingAllConfig -> R.string.title_real_ping_all_server
-                                MainServerConfigAction.SortByTestResults -> R.string.title_sort_by_test_results
-                                MainServerConfigAction.UpdateSubscription -> R.string.title_sub_update
+                                ConfigManagementAction.RestartService -> R.string.title_service_restart
+                                ConfigManagementAction.DeleteAllConfig -> R.string.title_del_all_config
+                                ConfigManagementAction.DeleteDuplicateConfig -> R.string.title_del_duplicate_config
+                                ConfigManagementAction.DeleteInvalidConfig -> R.string.title_del_invalid_config
+                                ConfigManagementAction.ExportAllConfig -> R.string.title_export_all
+                                ConfigManagementAction.PingAllConfig -> R.string.title_ping_all_server
+                                ConfigManagementAction.RealPingAllConfig -> R.string.title_real_ping_all_server
+                                ConfigManagementAction.SortByTestResults -> R.string.title_sort_by_test_results
+                                ConfigManagementAction.UpdateSubscription -> R.string.title_sub_update
                             }
                         )
                     )
                 }, leadingIcon = {
                     when (it) {
-                        MainServerConfigAction.DeleteAllConfig, MainServerConfigAction.DeleteDuplicateConfig, MainServerConfigAction.DeleteInvalidConfig -> Icon(
+                        ConfigManagementAction.DeleteAllConfig, ConfigManagementAction.DeleteDuplicateConfig, ConfigManagementAction.DeleteInvalidConfig -> Icon(
                             painterResource(id = R.drawable.ic_delete_white_24dp),
                             contentDescription = null
                         )
-                        MainServerConfigAction.ExportAllConfig -> Icon(
+                        ConfigManagementAction.ExportAllConfig -> Icon(
                             painterResource(id = R.drawable.ic_share_white_24dp),
                             contentDescription = null
                         )
@@ -389,31 +430,40 @@ enum class MainAddOption(val primary: Boolean = true) {
     CustomConfigLocal(false), CustomConfigUrl(false), CustomConfigUrlScan(false),
 }
 
-enum class MainServerConfigAction {
+enum class ConfigManagementAction {
     RestartService, DeleteAllConfig, DeleteDuplicateConfig, DeleteInvalidConfig, ExportAllConfig, PingAllConfig, RealPingAllConfig, SortByTestResults, UpdateSubscription,
+}
+
+enum class MainNavigationDestination {
+    SubSettings,
+    Settings,
+    UserAssetSettings,
+    Feedback,
+    Promotion,
+    Logcat,
 }
 
 /**
  * 对单个服务器配置的操作
  */
-enum class ServerConfigAction {
+sealed class ServerConfigAction {
     /**
      * 选中
      */
-    Apply,
+    object Apply : ServerConfigAction()
 
     /**
      * 分享
      */
-    Share,
+    data class Share(val type: Int) : ServerConfigAction()
 
     /**
      * 编辑
      */
-    Edit,
+    object Edit : ServerConfigAction()
 
     /**
      * 删除
      */
-    Delete
+    object Delete : ServerConfigAction()
 }

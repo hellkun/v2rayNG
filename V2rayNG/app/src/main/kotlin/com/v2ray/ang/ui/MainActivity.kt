@@ -1,8 +1,9 @@
 package com.v2ray.ang.ui
 
+import ConfigManagementAction
 import MainActivityScreen
 import MainAddOption
-import MainServerConfigAction
+import MainNavigationDestination
 import ServerConfigAction
 import android.Manifest
 import android.app.Activity
@@ -15,6 +16,7 @@ import android.text.TextUtils
 import android.util.Log
 import android.view.KeyEvent
 import android.view.MenuItem
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -48,7 +50,7 @@ import java.io.File
 import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
-class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedListener {
+class MainActivity : BaseActivity() {
     private lateinit var binding: ActivityMainBinding
 
     private val mainStorage by lazy {
@@ -118,6 +120,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                 isRunning = isRunning ?: false,
                 testMessage = testMessage,
                 configs = serversCache,
+                onNavigationItemSelect = this::onNavigate,
                 onItemClick = { s, serverConfigAction ->
                     handleSingleServerAction(isRunning ?: false, s, serverConfigAction) {
                         selectedServerGuid = s.guid
@@ -271,38 +274,29 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
-            ServerConfigAction.Share -> {
-                /*AlertDialog.Builder(this).setItems(shareOptions.toTypedArray()) { _, i ->
-                    try {
-                        when (i) {
-                            0 -> {
-                                if (config.configType == EConfigType.CUSTOM) {
-                                    shareFullContent(guid)
-                                } else {
-                                    val ivBinding =
-                                        ItemQrcodeBinding.inflate(LayoutInflater.from(mActivity))
-                                    ivBinding.ivQcode.setImageBitmap(
-                                        AngConfigManager.share2QRCode(
-                                            guid
-                                        )
-                                    )
-                                    AlertDialog.Builder(this).setView(ivBinding.root).show()
-                                }
-                            }
-                            1 -> {
-                                if (AngConfigManager.share2Clipboard(this, guid) == 0) {
-                                    toast(R.string.toast_success)
-                                } else {
-                                    toast(R.string.toast_failure)
-                                }
-                            }
-                            2 -> shareFullContent(guid)
-                            else -> toast("else")
+            is ServerConfigAction.Share -> {
+                when (action.type) {
+                    0 -> {
+                        if (config.configType == EConfigType.CUSTOM) {
+                            shareFullContent(guid)
+                        } else {
+                            val bitmap = AngConfigManager.share2QRCode(guid)
+
+                            AlertDialog.Builder(this).setView(ImageView(this).apply {
+                                setImageBitmap(bitmap)
+                            }).show()
                         }
-                    } catch (e: Exception) {
-                        e.printStackTrace()
                     }
-                }.show()*/
+                    1 -> {
+                        if (AngConfigManager.share2Clipboard(this, guid) == 0) {
+                            toast(R.string.toast_success)
+                        } else {
+                            toast(R.string.toast_failure)
+                        }
+                    }
+                    2 -> shareFullContent(guid)
+                    else -> toast("else")
+                }
             }
             ServerConfigAction.Edit -> {
                 val intent = Intent().putExtra("guid", guid)
@@ -326,6 +320,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                 }
             }
+            else -> {}
         }
     }
 
@@ -357,10 +352,10 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    private fun handleConfigActions(action: MainServerConfigAction) {
+    private fun handleConfigActions(action: ConfigManagementAction) {
         when (action) {
-            MainServerConfigAction.RestartService -> restartV2Ray()
-            MainServerConfigAction.DeleteAllConfig -> {
+            ConfigManagementAction.RestartService -> restartV2Ray()
+            ConfigManagementAction.DeleteAllConfig -> {
                 AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
                     .setPositiveButton(android.R.string.ok) { _, _ ->
                         MmkvManager.removeAllServer()
@@ -368,14 +363,14 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                     .show()
             }
-            MainServerConfigAction.DeleteDuplicateConfig -> {
+            ConfigManagementAction.DeleteDuplicateConfig -> {
                 AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
                     .setPositiveButton(android.R.string.ok) { _, _ ->
                         mainViewModel.removeDuplicateServer()
                     }
                     .show()
             }
-            MainServerConfigAction.DeleteInvalidConfig -> {
+            ConfigManagementAction.DeleteInvalidConfig -> {
                 AlertDialog.Builder(this).setMessage(R.string.del_config_comfirm)
                     .setPositiveButton(android.R.string.ok) { _, _ ->
                         MmkvManager.removeInvalidServer()
@@ -383,7 +378,7 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     }
                     .show()
             }
-            MainServerConfigAction.ExportAllConfig -> {
+            ConfigManagementAction.ExportAllConfig -> {
                 if (AngConfigManager.shareNonCustomConfigsToClipboard(
                         this,
                         mainViewModel.serverList
@@ -394,13 +389,13 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
                     toast(R.string.toast_failure)
                 }
             }
-            MainServerConfigAction.PingAllConfig -> mainViewModel.testAllTcping()
-            MainServerConfigAction.RealPingAllConfig -> mainViewModel.testAllRealPing()
-            MainServerConfigAction.SortByTestResults -> {
+            ConfigManagementAction.PingAllConfig -> mainViewModel.testAllTcping()
+            ConfigManagementAction.RealPingAllConfig -> mainViewModel.testAllRealPing()
+            ConfigManagementAction.SortByTestResults -> {
                 MmkvManager.sortByTestResults()
                 mainViewModel.reloadServerList()
             }
-            MainServerConfigAction.UpdateSubscription -> importConfigViaSub()
+            ConfigManagementAction.UpdateSubscription -> importConfigViaSub()
         }
     }
 
@@ -731,36 +726,32 @@ class MainActivity : BaseActivity(), NavigationView.OnNavigationItemSelectedList
         }
     }
 
-    override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Handle navigation view item clicks here.
-        when (item.itemId) {
-            //R.id.server_profile -> activityClass = MainActivity::class.java
-            R.id.sub_setting -> {
+    private fun onNavigate(destination: MainNavigationDestination) {
+        when (destination) {
+            MainNavigationDestination.SubSettings -> {
                 startActivity(Intent(this, SubSettingActivity::class.java))
             }
-            R.id.settings -> {
+            MainNavigationDestination.Settings -> {
                 startActivity(
                     Intent(this, SettingsActivity::class.java)
                         .putExtra("isRunning", mainViewModel.isRunning.value == true)
                 )
             }
-            R.id.user_asset_setting -> {
+            MainNavigationDestination.UserAssetSettings -> {
                 startActivity(Intent(this, UserAssetActivity::class.java))
             }
-            R.id.feedback -> {
+            MainNavigationDestination.Feedback -> {
                 Utils.openUri(this, AppConfig.v2rayNGIssues)
             }
-            R.id.promotion -> {
+            MainNavigationDestination.Promotion -> {
                 Utils.openUri(
                     this,
                     "${Utils.decode(AppConfig.promotionUrl)}?t=${System.currentTimeMillis()}"
                 )
             }
-            R.id.logcat -> {
+            MainNavigationDestination.Logcat -> {
                 startActivity(Intent(this, LogcatActivity::class.java))
             }
         }
-        binding.drawerLayout.closeDrawer(GravityCompat.START)
-        return true
     }
 }
