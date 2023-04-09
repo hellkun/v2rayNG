@@ -72,7 +72,8 @@
             android:name=".ui.ScannerActivity" />
         <activity
             android:exported="false"
-            android:name=".ui.LogcatActivity" />
+            android:name=".ui.LogcatActivity"
+            android:theme="@style/AppThemeDayNight.NoActionBar"/>
         <activity
             android:exported="false"
             android:name=".ui.RoutingSettingsActivity"

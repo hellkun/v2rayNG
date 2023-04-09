@@ -1,38 +1,36 @@
 package com.v2ray.ang.ui
 
+import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.Bundle
 import android.text.method.ScrollingMovementMethod
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
+import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
-import com.v2ray.ang.R
 import com.v2ray.ang.databinding.ActivityLogcatBinding
-import com.v2ray.ang.extension.toast
-import com.v2ray.ang.util.Utils
+import com.v2ray.ang.ui.compose.LogcatActivityScreen
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-
 import java.io.IOException
-import java.util.LinkedHashSet
 
 class LogcatActivity : BaseActivity() {
     private lateinit var binding: ActivityLogcatBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-       binding = ActivityLogcatBinding.inflate(layoutInflater)
-       val view = binding.root
-       setContentView(view)
 
-        title = getString(R.string.title_logcat)
+        setContent {
+            LogcatActivityScreen(onBack = this::finish)
+        }
+        /*binding = ActivityLogcatBinding.inflate(layoutInflater)
+        val view = binding.root
+        setContentView(view)
 
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        logcat(false)
+         title = getString(R.string.title_logcat)
+
+         supportActionBar?.setDisplayHomeAsUpEnabled(true)
+         logcat(false)*/
     }
 
     private fun logcat(shouldFlushLog: Boolean) {
@@ -70,23 +68,5 @@ class LogcatActivity : BaseActivity() {
         } catch (e: IOException) {
             e.printStackTrace()
         }
-    }
-
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_logcat, menu)
-        return super.onCreateOptionsMenu(menu)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
-        R.id.copy_all -> {
-            Utils.setClipboard(this, binding.tvLogcat.text.toString())
-            toast(R.string.toast_success)
-            true
-        }
-        R.id.clear_all -> {
-            logcat(true)
-            true
-        }
-        else -> super.onOptionsItemSelected(item)
     }
 }
