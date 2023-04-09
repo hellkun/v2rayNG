@@ -9,7 +9,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -21,14 +20,40 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.EConfigType
+import com.v2ray.ang.dto.ServerConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ServerActivityScreen(type: EConfigType, onBack: () -> Unit) {
-    val context = LocalContext.current
+fun ServerActivityScreen(type: EConfigType, serverConfig: ServerConfig?, onBack: () -> Unit) {
     // TODO: 加载初始值
     val contents = remember {
-        FieldContentType.values().associateWith { mutableStateOf("") }
+        val tlsSetting = serverConfig?.outboundBean?.streamSettings?.let { s ->
+            s.tlsSettings ?: s.realitySettings
+        }
+
+        FieldContentType.values().associateWith {
+            when (it) {
+                FieldContentType.Remarks -> mutableStateOf(serverConfig?.remarks.orEmpty())
+                FieldContentType.Address -> mutableStateOf(
+                    serverConfig?.getProxyOutbound()?.getServerAddress().orEmpty()
+                )
+                FieldContentType.Port -> mutableStateOf(
+                    serverConfig?.getProxyOutbound()?.getServerPort()?.toString().orEmpty()
+                )
+                FieldContentType.Id -> mutableStateOf(
+                    serverConfig?.getProxyOutbound()?.getPassword().orEmpty()
+                )
+                FieldContentType.AlterId -> mutableStateOf(
+                    serverConfig?.getProxyOutbound()?.settings?.vnext?.first()?.users?.first()?.alterId?.toString()
+                        .orEmpty()
+                )
+                FieldContentType.PublicKey -> mutableStateOf(tlsSetting?.publicKey.orEmpty())
+                FieldContentType.SNI -> mutableStateOf(tlsSetting?.serverName.orEmpty())
+                FieldContentType.ShortId -> mutableStateOf(tlsSetting?.shortId.orEmpty())
+                FieldContentType.SpiderX -> mutableStateOf(tlsSetting?.spiderX.orEmpty())
+                else -> mutableStateOf("")
+            }
+        }
     }
 
     Scaffold(topBar = {
@@ -41,13 +66,14 @@ fun ServerActivityScreen(type: EConfigType, onBack: () -> Unit) {
             }
         })
     }) { padding ->
-
-
         Column(
-            Modifier
-                .padding(padding)
+            Modifier.padding(padding)
         ) {
-            MainFormContent(type = type, contents = contents, modifier = Modifier.weight(1f))
+            MainFormContent(
+                type = type,
+                contents = contents,
+                modifier = Modifier.weight(1f)
+            )
 
             Surface(
                 modifier = Modifier
