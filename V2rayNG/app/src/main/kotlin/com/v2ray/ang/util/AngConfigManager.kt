@@ -37,7 +37,7 @@ object AngConfigManager {
             if (context.isNullOrBlank()) {
                 return null
             }
-            val angConfig = Gson().fromJson(context, AngConfig::class.java)
+            val angConfig =Utils.gson.fromJson(context, AngConfig::class.java)
             for (i in angConfig.vmess.indices) {
                 upgradeServerVersion(angConfig.vmess[i])
             }
@@ -95,7 +95,7 @@ object AngConfigManager {
             if (type == EConfigType.CUSTOM) {
                 val jsonConfig = sharedPreferences.getString(ANG_CONFIG + vmessBean.guid, "")
                 val v2rayConfig = try {
-                    Gson().fromJson(jsonConfig, V2rayConfig::class.java)
+                    Utils.gson.fromJson(jsonConfig, V2rayConfig::class.java)
                 } catch (e: Exception) {
                     e.printStackTrace()
                     return@forEachIndexed
@@ -161,7 +161,7 @@ object AngConfigManager {
             subItem.remarks = it.remarks
             subItem.url = it.url
             subItem.enabled = it.enabled
-            subStorage?.encode(it.id, Gson().toJson(subItem))
+            subStorage?.encode(it.id, Utils.gson.toJson(subItem))
         }
     }
 
@@ -198,7 +198,7 @@ object AngConfigManager {
                         if (TextUtils.isEmpty(result)) {
                             return R.string.toast_decoding_failed
                         }
-                        val vmessQRCode = Gson().fromJson(result, VmessQRCode::class.java)
+                        val vmessQRCode = Utils.gson.fromJson(result, VmessQRCode::class.java)
                         // Although VmessQRCode fields are non null, looks like Gson may still create null fields
                         if (TextUtils.isEmpty(vmessQRCode.add)
                                 || TextUtils.isEmpty(vmessQRCode.port)
@@ -492,7 +492,7 @@ object AngConfigManager {
                         vmessQRCode.host = transportDetails[1]
                         vmessQRCode.path = transportDetails[2]
                     }
-                    val json = Gson().toJson(vmessQRCode)
+                    val json = Utils.gson.toJson(vmessQRCode)
                     Utils.encode(json)
                 }
                 EConfigType.CUSTOM, EConfigType.WIREGUARD -> ""

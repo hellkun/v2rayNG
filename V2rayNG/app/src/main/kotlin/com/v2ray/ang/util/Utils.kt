@@ -1,40 +1,50 @@
 package com.v2ray.ang.util
 
+import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
-import android.text.Editable
-import android.util.Base64
-import com.google.zxing.WriterException
-import android.graphics.Bitmap
-import com.google.zxing.BarcodeFormat
-import com.google.zxing.qrcode.QRCodeWriter
-import com.google.zxing.EncodeHintType
-import java.util.*
-import kotlin.collections.HashMap
-import android.content.ClipData
 import android.content.Intent
 import android.content.res.Configuration.UI_MODE_NIGHT_MASK
 import android.content.res.Configuration.UI_MODE_NIGHT_YES
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.LocaleList
+import android.text.Editable
+import android.util.Base64
 import android.util.Log
 import android.util.Patterns
 import android.webkit.URLUtil
+import com.google.gson.Gson
+import com.google.zxing.BarcodeFormat
+import com.google.zxing.EncodeHintType
+import com.google.zxing.WriterException
+import com.google.zxing.qrcode.QRCodeWriter
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import com.v2ray.ang.BuildConfig
 import com.v2ray.ang.R
 import com.v2ray.ang.extension.toast
-import java.net.*
 import com.v2ray.ang.service.V2RayServiceManager
 import java.io.IOException
+import java.net.*
+import java.util.*
 
 object Utils {
 
-    private val mainStorage by lazy { MMKV.mmkvWithID(MmkvManager.ID_MAIN, MMKV.MULTI_PROCESS_MODE) }
-    private val settingsStorage by lazy { MMKV.mmkvWithID(MmkvManager.ID_SETTING, MMKV.MULTI_PROCESS_MODE) }
+    private val mainStorage by lazy {
+        MMKV.mmkvWithID(
+            MmkvManager.ID_MAIN,
+            MMKV.MULTI_PROCESS_MODE
+        )
+    }
+    private val settingsStorage by lazy {
+        MMKV.mmkvWithID(
+            MmkvManager.ID_SETTING,
+            MMKV.MULTI_PROCESS_MODE
+        )
+    }
 
     /**
      * convert string to editalbe for kotlin
@@ -120,7 +130,8 @@ object Utils {
             Log.i(ANG_PACKAGE, "Parse base64 standard failed $e")
         }
         try {
-            return Base64.decode(text, Base64.NO_WRAP.or(Base64.URL_SAFE)).toString(charset("UTF-8"))
+            return Base64.decode(text, Base64.NO_WRAP.or(Base64.URL_SAFE))
+                .toString(charset("UTF-8"))
         } catch (e: Exception) {
             Log.i(ANG_PACKAGE, "Parse base64 url safe failed $e")
         }
@@ -143,7 +154,8 @@ object Utils {
      * get remote dns servers from preference
      */
     fun getRemoteDnsServers(): List<String> {
-        val remoteDns = settingsStorage?.decodeString(AppConfig.PREF_REMOTE_DNS) ?: AppConfig.DNS_AGENT
+        val remoteDns =
+            settingsStorage?.decodeString(AppConfig.PREF_REMOTE_DNS) ?: AppConfig.DNS_AGENT
         val ret = remoteDns.split(",").filter { isPureIpAddress(it) || isCoreDNSAddress(it) }
         if (ret.isEmpty()) {
             return listOf(AppConfig.DNS_AGENT)
@@ -153,8 +165,8 @@ object Utils {
 
     fun getVpnDnsServers(): List<String> {
         val vpnDns = settingsStorage?.decodeString(AppConfig.PREF_VPN_DNS)
-                ?: settingsStorage?.decodeString(AppConfig.PREF_REMOTE_DNS)
-                ?: AppConfig.DNS_AGENT
+            ?: settingsStorage?.decodeString(AppConfig.PREF_REMOTE_DNS)
+            ?: AppConfig.DNS_AGENT
         return vpnDns.split(",").filter { isPureIpAddress(it) }
         // allow empty, in that case dns will use system default
     }
@@ -163,7 +175,8 @@ object Utils {
      * get remote dns servers from preference
      */
     fun getDomesticDnsServers(): List<String> {
-        val domesticDns = settingsStorage?.decodeString(AppConfig.PREF_DOMESTIC_DNS) ?: AppConfig.DNS_DIRECT
+        val domesticDns =
+            settingsStorage?.decodeString(AppConfig.PREF_DOMESTIC_DNS) ?: AppConfig.DNS_DIRECT
         val ret = domesticDns.split(",").filter { isPureIpAddress(it) || isCoreDNSAddress(it) }
         if (ret.isEmpty()) {
             return listOf(AppConfig.DNS_DIRECT)
@@ -178,8 +191,10 @@ object Utils {
         try {
             val hints = HashMap<EncodeHintType, String>()
             hints[EncodeHintType.CHARACTER_SET] = "utf-8"
-            val bitMatrix = QRCodeWriter().encode(text,
-                    BarcodeFormat.QR_CODE, size, size, hints)
+            val bitMatrix = QRCodeWriter().encode(
+                text,
+                BarcodeFormat.QR_CODE, size, size, hints
+            )
             val pixels = IntArray(size * size)
             for (y in 0 until size) {
                 for (x in 0 until size) {
@@ -191,8 +206,10 @@ object Utils {
 
                 }
             }
-            val bitmap = Bitmap.createBitmap(size, size,
-                    Bitmap.Config.ARGB_8888)
+            val bitmap = Bitmap.createBitmap(
+                size, size,
+                Bitmap.Config.ARGB_8888
+            )
             bitmap.setPixels(pixels, 0, size, 0, 0, size, size)
             return bitmap
         } catch (e: WriterException) {
@@ -248,7 +265,8 @@ object Utils {
     }
 
     fun isIpv4Address(value: String): Boolean {
-        val regV4 = Regex("^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$")
+        val regV4 =
+            Regex("^([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])\\.([01]?[0-9]?[0-9]|2[0-4][0-9]|25[0-5])$")
         return regV4.matches(value)
     }
 
@@ -258,7 +276,8 @@ object Utils {
             addr = addr.drop(1)
             addr = addr.dropLast(addr.count() - addr.lastIndexOf("]"))
         }
-        val regV6 = Regex("^((?:[0-9A-Fa-f]{1,4}))?((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))?((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$")
+        val regV6 =
+            Regex("^((?:[0-9A-Fa-f]{1,4}))?((?::[0-9A-Fa-f]{1,4}))*::((?:[0-9A-Fa-f]{1,4}))?((?::[0-9A-Fa-f]{1,4}))*|((?:[0-9A-Fa-f]{1,4}))((?::[0-9A-Fa-f]{1,4})){7}$")
         return regV6.matches(addr)
     }
 
@@ -271,7 +290,10 @@ object Utils {
      */
     fun isValidUrl(value: String?): Boolean {
         try {
-            if (value != null && Patterns.WEB_URL.matcher(value).matches() || URLUtil.isValidUrl(value)) {
+            if (value != null && Patterns.WEB_URL.matcher(value).matches() || URLUtil.isValidUrl(
+                    value
+                )
+            ) {
                 return true
             }
         } catch (e: WriterException) {
@@ -348,7 +370,7 @@ object Utils {
         if (context == null)
             return ""
         val extDir = context.getExternalFilesDir(AppConfig.DIR_ASSETS)
-                ?: return context.getDir(AppConfig.DIR_ASSETS, 0).absolutePath
+            ?: return context.getDir(AppConfig.DIR_ASSETS, 0).absolutePath
         return extDir.absolutePath
     }
 
@@ -380,8 +402,10 @@ object Utils {
         conn.setRequestProperty("Connection", "close")
         conn.setRequestProperty("User-agent", "v2rayNG/${BuildConfig.VERSION_NAME}")
         url.userInfo?.let {
-            conn.setRequestProperty("Authorization",
-                "Basic ${encode(urlDecode(it))}")
+            conn.setRequestProperty(
+                "Authorization",
+                "Basic ${encode(urlDecode(it))}"
+            )
         }
         conn.useCaches = false
         return conn.inputStream.use {
@@ -404,7 +428,7 @@ object Utils {
 
     fun getLocale(context: Context): Locale =
         when (settingsStorage?.decodeString(AppConfig.PREF_LANGUAGE) ?: "auto") {
-            "auto" ->  getSysLocale()
+            "auto" -> getSysLocale()
             "en" -> Locale("en")
             "zh-rCN" -> Locale("zh", "CN")
             "zh-rTW" -> Locale("zh", "TW")
@@ -422,8 +446,8 @@ object Utils {
 
     fun fixIllegalUrl(str: String): String {
         return str
-            .replace(" ","%20")
-            .replace("|","%7C")
+            .replace(" ", "%20")
+            .replace("|", "%7C")
     }
 
     fun removeWhiteSpace(str: String?): String? {
@@ -435,5 +459,7 @@ object Utils {
         return URL(url.protocol, IDN.toASCII(url.host, IDN.ALLOW_UNASSIGNED), url.port, url.file)
             .toExternalForm()
     }
+
+    val gson = Gson()
 }
 

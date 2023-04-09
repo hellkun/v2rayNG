@@ -24,6 +24,7 @@ import com.tencent.mmkv.MMKV
 import com.v2ray.ang.R
 import com.v2ray.ang.dto.SubscriptionItem
 import com.v2ray.ang.util.MmkvManager
+import com.v2ray.ang.util.Utils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,7 +83,7 @@ fun SubSettingActivityScreen(
                             .height(dimensionResource(id = R.dimen.server_height))
                             .clickable {
                                 item.second.enabled = !item.second.enabled
-                                subStorage?.encode(item.first, Gson().toJson(item.second))
+                                subStorage?.encode(item.first, Utils.gson.toJson(item.second))
                                 if (item.second.enabled) {
                                     selectedSubscriptionId = item.first
                                 }

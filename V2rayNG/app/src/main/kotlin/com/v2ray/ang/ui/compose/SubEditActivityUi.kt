@@ -33,7 +33,7 @@ fun SubEditActivityScreen(onBack: () -> Unit, subId: String?) {
     val subscriptionItem = remember(subId) {
         mmkv?.decodeString(subId.orEmpty())
             ?.let {
-                Gson().fromJson(it, SubscriptionItem::class.java)
+                Utils.gson.fromJson(it, SubscriptionItem::class.java)
             }
     }
 
@@ -92,7 +92,7 @@ fun SubEditActivityScreen(onBack: () -> Unit, subId: String?) {
                 } else {
                     val id = if (subscriptionItem != null) subId!! else Utils.getUuid()
 
-                    mmkv?.encode(id, Gson().toJson(item))
+                    mmkv?.encode(id, Utils.gson.toJson(item))
                     scope.launch {
                         snackBarHostState.showSnackbar(context.getString(R.string.toast_success))
                     }

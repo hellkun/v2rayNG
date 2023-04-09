@@ -80,7 +80,7 @@ class ServerCustomConfigActivity : BaseActivity() {
         }
 
         val v2rayConfig = try {
-            Gson().fromJson(binding.editor.text.toString(), V2rayConfig::class.java)
+            Utils.gson.fromJson(binding.editor.text.toString(), V2rayConfig::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
             ToastCompat.makeText(this, "${getString(R.string.toast_malformed_josn)} ${e.cause?.message}", Toast.LENGTH_LONG).show()

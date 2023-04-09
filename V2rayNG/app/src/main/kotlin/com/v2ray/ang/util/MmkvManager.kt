@@ -26,7 +26,7 @@ object MmkvManager {
         return if (json.isNullOrBlank()) {
             mutableListOf()
         } else {
-            Gson().fromJson(json, Array<String>::class.java).toMutableList()
+            Utils.gson.fromJson(json, Array<String>::class.java).toMutableList()
         }
     }
 
@@ -38,16 +38,16 @@ object MmkvManager {
         if (json.isNullOrBlank()) {
             return null
         }
-        return Gson().fromJson(json, ServerConfig::class.java)
+        return Utils.gson.fromJson(json, ServerConfig::class.java)
     }
 
     fun encodeServerConfig(guid: String, config: ServerConfig): String {
         val key = guid.ifBlank { Utils.getUuid() }
-        serverStorage?.encode(key, Gson().toJson(config))
+        serverStorage?.encode(key, Utils.gson.toJson(config))
         val serverList = decodeServerList()
         if (!serverList.contains(key)) {
             serverList.add(0, key)
-            mainStorage?.encode(KEY_ANG_CONFIGS, Gson().toJson(serverList))
+            mainStorage?.encode(KEY_ANG_CONFIGS, Utils.gson.toJson(serverList))
             if (mainStorage?.decodeString(KEY_SELECTED_SERVER).isNullOrBlank()) {
                 mainStorage?.encode(KEY_SELECTED_SERVER, key)
             }
@@ -64,7 +64,7 @@ object MmkvManager {
         }
         val serverList = decodeServerList()
         serverList.remove(guid)
-        mainStorage?.encode(KEY_ANG_CONFIGS, Gson().toJson(serverList))
+        mainStorage?.encode(KEY_ANG_CONFIGS, Utils.gson.toJson(serverList))
         serverStorage?.remove(guid)
         serverAffStorage?.remove(guid)
     }
@@ -90,7 +90,7 @@ object MmkvManager {
         if (json.isNullOrBlank()) {
             return null
         }
-        return Gson().fromJson(json, ServerAffiliationInfo::class.java)
+        return Utils.gson.fromJson(json, ServerAffiliationInfo::class.java)
     }
 
     fun encodeServerTestDelayMillis(guid: String, testResult: Long) {
@@ -99,14 +99,14 @@ object MmkvManager {
         }
         val aff = decodeServerAffiliationInfo(guid) ?: ServerAffiliationInfo()
         aff.testDelayMillis = testResult
-        serverAffStorage?.encode(guid, Gson().toJson(aff))
+        serverAffStorage?.encode(guid, Utils.gson.toJson(aff))
     }
 
     fun clearAllTestDelayResults() {
         serverAffStorage?.allKeys()?.forEach { key ->
             decodeServerAffiliationInfo(key)?.let { aff ->
                 aff.testDelayMillis = 0
-                serverAffStorage?.encode(key, Gson().toJson(aff))
+                serverAffStorage?.encode(key, Utils.gson.toJson(aff))
             }
         }
     }
@@ -121,7 +121,7 @@ object MmkvManager {
         val subItem = SubscriptionItem()
         subItem.remarks = "import sub"
         subItem.url = url
-        subStorage?.encode(Utils.getUuid(), Gson().toJson(subItem))
+        subStorage?.encode(Utils.getUuid(), Utils.gson.toJson(subItem))
         return 1
     }
 
@@ -130,7 +130,7 @@ object MmkvManager {
         subStorage?.allKeys()?.forEach { key ->
             val json = subStorage?.decodeString(key)
             if (!json.isNullOrBlank()) {
-                subscriptions.add(Pair(key, Gson().fromJson(json, SubscriptionItem::class.java)))
+                subscriptions.add(Pair(key, Utils.gson.fromJson(json, SubscriptionItem::class.java)))
             }
         }
         subscriptions.sortedBy { (_, value) -> value.addedTime }
@@ -174,6 +174,6 @@ object MmkvManager {
             serverList.add(it.guid)
         }
 
-        mainStorage?.encode(KEY_ANG_CONFIGS, Gson().toJson(serverList))
+        mainStorage?.encode(KEY_ANG_CONFIGS, Utils.gson.toJson(serverList))
     }
 }

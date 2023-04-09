@@ -9,7 +9,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import com.google.gson.Gson
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AngApplication
 import com.v2ray.ang.AppConfig
@@ -95,7 +94,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val config = ServerConfig.create(EConfigType.CUSTOM)
         config.remarks = System.currentTimeMillis().toString()
         config.subscriptionId = subscriptionId
-        config.fullConfig = Gson().fromJson(server, V2rayConfig::class.java)
+        config.fullConfig = Utils.gson.fromJson(server, V2rayConfig::class.java)
         val key = MmkvManager.encodeServerConfig("", config)
         serverRawStorage?.encode(key, server)
         serverList.add(0, key)
@@ -112,7 +111,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         Collections.swap(newlist, fromPosition, toPosition)
         _serversCacheFlow.value = newlist
 
-        mainStorage?.encode(KEY_ANG_CONFIGS, Gson().toJson(serverList))
+        mainStorage?.encode(KEY_ANG_CONFIGS, Utils.gson.toJson(serverList))
     }
 
     @Synchronized
