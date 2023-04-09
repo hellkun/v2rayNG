@@ -1,5 +1,6 @@
 package com.v2ray.ang.ui.compose
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -33,10 +34,6 @@ fun ServerActivityScreen(type: EConfigType, onBack: () -> Unit) {
     Scaffold(topBar = {
         TopAppBar(title = {
             Text(stringResource(id = R.string.title_server))
-        }, actions = {
-            IconButton(onClick = { /*TODO*/ }) {
-                Icon(Icons.Default.Check, contentDescription = null)
-            }
         }, navigationIcon = {
             val curOnBack by rememberUpdatedState(newValue = onBack)
             IconButton(onClick = curOnBack) {
@@ -44,137 +41,174 @@ fun ServerActivityScreen(type: EConfigType, onBack: () -> Unit) {
             }
         })
     }) { padding ->
-        val scrollState = rememberScrollState()
+
 
         Column(
             Modifier
                 .padding(padding)
-                .verticalScroll(scrollState)
-                .padding(horizontal = 16.dp),
         ) {
-            // common fields
-            ServerConfigField(
-                type = FieldContentType.Remarks, content = contents[FieldContentType.Remarks]!!
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ServerConfigField(
-                type = FieldContentType.Address, content = contents[FieldContentType.Address]!!
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            ServerConfigField(
-                type = FieldContentType.Port, content = contents[FieldContentType.Port]!!
-            )
-            Spacer(modifier = Modifier.height(16.dp))
+            MainFormContent(type = type, contents = contents, modifier = Modifier.weight(1f))
 
-            when (type) {
-                EConfigType.VMESS -> {
-                    ServerConfigField(
-                        type = FieldContentType.Id, content = contents[FieldContentType.Id]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.AlterId,
-                        content = contents[FieldContentType.AlterId]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    V2RaySecurities()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NetworkSecurities()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.RequestHost,
-                        content = contents[FieldContentType.RequestHost]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TlsFields(contents = contents)
+            Surface(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .height(72.dp),
+                shadowElevation = 48.dp
+            ) {
+                Button(
+                    onClick = { /*TODO*/ },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 16.dp, top = 8.dp)
+                ) {
+                    Text("保存")
                 }
-                EConfigType.SHADOWSOCKS -> {
-                    ServerConfigField(
-                        type = FieldContentType.Password,
-                        content = contents[FieldContentType.Password]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ShadowsocksSecurities()
-                }
-                EConfigType.SOCKS -> {
-                    ServerConfigField(
-                        type = FieldContentType.Username,
-                        content = contents[FieldContentType.Username]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    ServerConfigField(
-                        type = FieldContentType.PasswordOptional,
-                        content = contents[FieldContentType.PasswordOptional]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
-                EConfigType.VLESS -> {
-                    ServerConfigField(
-                        type = FieldContentType.Id, content = contents[FieldContentType.Id]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val selectableFlows = remember {
-                        context.resources.getStringArray(R.array.flows)
-                    }
-                    var selectedFlow by remember {
-                        mutableStateOf(selectableFlows.first())
-                    }
-                    DropdownText(
-                        title = stringResource(id = R.string.server_lab_flow),
-                        selected = selectedFlow,
-                        selectables = selectableFlows,
-                        onSelect = { selectedFlow = it }
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    ServerConfigField(
-                        type = FieldContentType.Encryption,
-                        content = contents[FieldContentType.Encryption]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    V2RaySecurities()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NetworkSecurities()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.RequestHost,
-                        content = contents[FieldContentType.RequestHost]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TlsFields(contents = contents)
-                }
-                EConfigType.TROJAN -> {
-                    ServerConfigField(
-                        type = FieldContentType.Password,
-                        content = contents[FieldContentType.Password]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    NetworkSecurities()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.RequestHost,
-                        content = contents[FieldContentType.RequestHost]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    ServerConfigField(
-                        type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TlsFields(contents = contents)
-                }
-                else -> {}
             }
+
+        }
+
+
+    }
+}
+
+@Composable
+private fun MainFormContent(
+    type: EConfigType,
+    contents: Map<FieldContentType, MutableState<String>>,
+    modifier: Modifier = Modifier,
+) {
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+
+    Column(
+        modifier
+            .background(MaterialTheme.colorScheme.background)
+            .verticalScroll(scrollState)
+            .padding(horizontal = 16.dp),
+    ) {
+        // common fields
+        ServerConfigField(
+            type = FieldContentType.Remarks, content = contents[FieldContentType.Remarks]!!
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ServerConfigField(
+            type = FieldContentType.Address, content = contents[FieldContentType.Address]!!
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        ServerConfigField(
+            type = FieldContentType.Port, content = contents[FieldContentType.Port]!!
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        when (type) {
+            EConfigType.VMESS -> {
+                ServerConfigField(
+                    type = FieldContentType.Id, content = contents[FieldContentType.Id]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.AlterId,
+                    content = contents[FieldContentType.AlterId]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                V2RaySecurities()
+                Spacer(modifier = Modifier.height(16.dp))
+                NetworkSecurities()
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.RequestHost,
+                    content = contents[FieldContentType.RequestHost]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                TlsFields(contents = contents)
+            }
+            EConfigType.SHADOWSOCKS -> {
+                ServerConfigField(
+                    type = FieldContentType.Password,
+                    content = contents[FieldContentType.Password]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ShadowsocksSecurities()
+            }
+            EConfigType.SOCKS -> {
+                ServerConfigField(
+                    type = FieldContentType.Username,
+                    content = contents[FieldContentType.Username]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ServerConfigField(
+                    type = FieldContentType.PasswordOptional,
+                    content = contents[FieldContentType.PasswordOptional]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            EConfigType.VLESS -> {
+                ServerConfigField(
+                    type = FieldContentType.Id, content = contents[FieldContentType.Id]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                val selectableFlows = remember {
+                    context.resources.getStringArray(R.array.flows)
+                }
+                var selectedFlow by remember {
+                    mutableStateOf(selectableFlows.first())
+                }
+                DropdownText(
+                    title = stringResource(id = R.string.server_lab_flow),
+                    selected = selectedFlow,
+                    selectables = selectableFlows,
+                    onSelect = { selectedFlow = it }
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                ServerConfigField(
+                    type = FieldContentType.Encryption,
+                    content = contents[FieldContentType.Encryption]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+
+                V2RaySecurities()
+                Spacer(modifier = Modifier.height(16.dp))
+                NetworkSecurities()
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.RequestHost,
+                    content = contents[FieldContentType.RequestHost]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                TlsFields(contents = contents)
+            }
+            EConfigType.TROJAN -> {
+                ServerConfigField(
+                    type = FieldContentType.Password,
+                    content = contents[FieldContentType.Password]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                NetworkSecurities()
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.RequestHost,
+                    content = contents[FieldContentType.RequestHost]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                ServerConfigField(
+                    type = FieldContentType.Path, content = contents[FieldContentType.Path]!!
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                TlsFields(contents = contents)
+            }
+            else -> {}
         }
     }
 }
@@ -361,7 +395,6 @@ private fun NetworkSecurities() {
             selected = it
         },
     )
-
 
     if (headTypes.isNotEmpty()) {
         Spacer(modifier = Modifier.height(16.dp))
