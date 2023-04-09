@@ -83,6 +83,7 @@
         <activity
             android:name=".ui.RoutingSettingsActivity"
             android:exported="false"
+            android:theme="@style/AppThemeDayNight.NoActionBar"
             android:windowSoftInputMode="stateUnchanged" />
         <activity
             android:name=".ui.SubSettingActivity"
