@@ -7,7 +7,8 @@ import MainNavigationDestination
 import ServerConfigAction
 import android.Manifest
 import android.app.Activity
-import android.content.*
+import android.content.ActivityNotFoundException
+import android.content.Intent
 import android.net.Uri
 import android.net.VpnService
 import android.os.Build
@@ -15,7 +16,6 @@ import android.os.Bundle
 import android.text.TextUtils
 import android.util.Log
 import android.view.KeyEvent
-import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -27,22 +27,23 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.stringResource
-import androidx.core.view.GravityCompat
 import androidx.lifecycle.lifecycleScope
-import com.google.android.material.navigation.NavigationView
 import com.tbruyelle.rxpermissions.RxPermissions
 import com.tencent.mmkv.MMKV
 import com.v2ray.ang.AppConfig
 import com.v2ray.ang.AppConfig.ANG_PACKAGE
 import com.v2ray.ang.R
-import com.v2ray.ang.databinding.ActivityMainBinding
 import com.v2ray.ang.dto.EConfigType
 import com.v2ray.ang.dto.ServersCache
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.service.V2RayServiceManager
-import com.v2ray.ang.util.*
+import com.v2ray.ang.util.AngConfigManager
+import com.v2ray.ang.util.MmkvManager
+import com.v2ray.ang.util.Utils
 import com.v2ray.ang.viewmodel.MainViewModel
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import me.drakeet.support.toast.ToastCompat
 import rx.Observable
 import rx.android.schedulers.AndroidSchedulers
@@ -51,7 +52,6 @@ import java.io.FileOutputStream
 import java.util.concurrent.TimeUnit
 
 class MainActivity : BaseActivity() {
-    private lateinit var binding: ActivityMainBinding
 
     private val mainStorage by lazy {
         MMKV.mmkvWithID(
@@ -156,7 +156,10 @@ class MainActivity : BaseActivity() {
 //                tv_test_state.text = getString(R.string.connection_test_fail)
                     }
                 },
-                selectedServerGuid = selectedServerGuid
+                selectedServerGuid = selectedServerGuid,
+                onBackPressed = {
+                    moveTaskToBack(false)
+                }
             )
         }
 
@@ -673,9 +676,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    fun setTestState(content: String?) {
-        binding.tvTestState.text = content
-    }
 
 //    val mConnection = object : ServiceConnection {
 //        override fun onServiceDisconnected(name: ComponentName?) {
@@ -686,20 +686,12 @@ class MainActivity : BaseActivity() {
 //        }
 //    }
 
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            moveTaskToBack(false)
-            return true
-        }
-        return super.onKeyDown(keyCode, event)
-    }
-
     fun showCircle() {
         //binding.fabProgressCircle.show()
     }
 
     fun hideCircle() {
-        try {
+        /*try {
             Observable.timer(300, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe {
@@ -713,17 +705,7 @@ class MainActivity : BaseActivity() {
                 }
         } catch (e: Exception) {
             Log.d(ANG_PACKAGE, e.toString())
-        }
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (binding.drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            binding.drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            //super.onBackPressed()
-            onBackPressedDispatcher.onBackPressed()
-        }
+        }*/
     }
 
     private fun onNavigate(destination: MainNavigationDestination) {

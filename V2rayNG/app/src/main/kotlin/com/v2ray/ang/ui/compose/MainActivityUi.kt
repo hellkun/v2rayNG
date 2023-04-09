@@ -1,3 +1,4 @@
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,10 +35,14 @@ fun MainActivityScreen(
     onFabClick: () -> Unit,
     onStartTest: () -> Unit,
     selectedServerGuid: String? = null,
+    onBackPressed: (() -> Unit)? = null,
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val curOnFabClick by rememberUpdatedState(newValue = onFabClick)
     val curOnStartTest by rememberUpdatedState(newValue = onStartTest)
+    val curOnBack by rememberUpdatedState(newValue = onBackPressed)
 
     // 要分享的ServersCache
     var sharePendingItem by remember(configs) {
@@ -58,6 +63,16 @@ fun MainActivityScreen(
         }
     }
 
+    BackHandler {
+        if (!drawerState.isClosed) {
+            coroutineScope.launch {
+                drawerState.close()
+            }
+        } else {
+            curOnBack?.invoke()
+        }
+    }
+
     ModalNavigationDrawer(
         modifier = modifier, drawerContent = {
             MainDrawer(onNavigationItemSelect)
@@ -67,8 +82,6 @@ fun MainActivityScreen(
             TopAppBar(title = {
                 Text(text = stringResource(id = R.string.title_server))
             }, navigationIcon = {
-                val coroutineScope = rememberCoroutineScope()
-
                 IconButton(onClick = {
                     coroutineScope.launch {
                         if (drawerState.isOpen) {
