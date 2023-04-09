@@ -1,4 +1,5 @@
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,6 +15,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.*
 import androidx.compose.ui.unit.dp
@@ -107,40 +109,84 @@ fun MainActivityScreen(
 
                 MainOverflowButton(onSelect = onSelectAction)
             })
-        }, floatingActionButton = {
-            val shape = FloatingActionButtonDefaults.shape
-            FloatingActionButton(
-                onClick = curOnFabClick,
-                containerColor = colorResource(id = if (isRunning) R.color.colorSelected else R.color.colorUnselected),
-                shape = shape,
-            ) {
-                Icon(painterResource(id = R.drawable.ic_stat_name), contentDescription = null)
-            }
         }) { padding ->
-            Column(Modifier.padding(padding)) {
+            Column(
+                Modifier.padding(padding),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                var bgColor = MaterialTheme.colorScheme.primary
+                if (!isRunning) bgColor = bgColor.copy(alpha = 0.6f)
+
+                val shape = RoundedCornerShape(8.dp)
+                Box(
+                    modifier = Modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth()
+                        .height(72.dp)
+                        .clip(shape)
+                        .background(bgColor, shape)
+                        .clickable(onClick = curOnFabClick)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .align(Alignment.CenterStart),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = testMessage,
+                            modifier = Modifier.weight(1f),
+                            color = Color.White,
+                            maxLines = 2,
+                        )
+
+                        if (isRunning) {
+                            Spacer(Modifier.width(8.dp))
+
+                            TextButton(
+                                onClick = curOnStartTest, shape = RoundedCornerShape(50),
+                                colors = ButtonDefaults.buttonColors(
+                                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.onPrimary),
+                            ) {
+                                Text("测试")
+                            }
+                        }
+                    }
+
+                }
+
+                Divider(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), thickness = 2.dp)
+
                 // lazy list
                 LazyColumn(modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f), content = {
-                    itemsIndexed(configs, key = { _, conf ->
-                        conf.guid
-                    }) { index, item ->
-                        ServerConfigItem(Modifier.animateItemPlacement(),
-                            server = item,
-                            active = item.guid == selectedServerGuid,
-                            onSelectAction = {
-                                if (it is ServerConfigAction.Share && it.type == -1) {
-                                    sharePendingItem = item
-                                } else {
-                                    onItemClick(item, it)
-                                }
-                            })
-                        if (index < configs.size - 1) Spacer(modifier = Modifier.height(4.dp))
-                    }
-                })
+                    .weight(1f),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    content = {
+                        itemsIndexed(configs, key = { _, conf ->
+                            conf.guid
+                        }) { index, item ->
+                            ServerConfigItem(Modifier.animateItemPlacement(),
+                                server = item,
+                                active = item.guid == selectedServerGuid,
+                                onSelectAction = {
+                                    if (it is ServerConfigAction.Share && it.type == -1) {
+                                        sharePendingItem = item
+                                    } else {
+                                        onItemClick(item, it)
+                                    }
+                                })
+                            if (index < configs.size - 1) Spacer(modifier = Modifier.height(4.dp))
+                        }
+                    })
 
                 // bottom
-                Box(
+                /*Box(
                     Modifier
                         .fillMaxWidth()
                         .height(dimensionResource(id = R.dimen.connection_test_height))
@@ -154,7 +200,7 @@ fun MainActivityScreen(
                         color = Color.White,
                         maxLines = 2,
                     )
-                }
+                }*/
             }
         }
     }
@@ -169,7 +215,11 @@ fun ServerConfigItem(
 ) {
     val curOnSelect by rememberUpdatedState(newValue = onSelectAction)
 
-    Card(modifier = modifier, shape = RoundedCornerShape(5.dp)) {
+    var showMenu by remember(server) {
+        mutableStateOf(false)
+    }
+
+    Card(modifier = modifier, shape = RoundedCornerShape(8.dp)) {
         Row(
             Modifier
                 .fillMaxWidth()
@@ -182,11 +232,11 @@ fun ServerConfigItem(
             Box(
                 Modifier
                     .fillMaxHeight()
-                    .width(10.dp)
+                    .width(8.dp)
                     .background(colorResource(id = if (active) R.color.colorSelected else R.color.colorUnselected))
             )
 
-            Spacer(modifier = Modifier.width(5.dp))
+            Spacer(modifier = Modifier.width(8.dp))
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -210,8 +260,50 @@ fun ServerConfigItem(
             }
 
             val iconModifier = Modifier.size(dimensionResource(id = R.dimen.png_height))
+
+            Box {
+                IconButton(onClick = {
+                    showMenu = true
+                }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                }
+
+                DropdownMenu(expanded = showMenu, onDismissRequest = {
+                    showMenu = false
+                }) {
+                    DropdownMenuItem(text = {
+                        Text("分享")
+                    }, leadingIcon = {
+                        Icon(
+                            modifier = iconModifier,
+                            painter = painterResource(id = R.drawable.ic_share_black_24dp),
+                            contentDescription = null,
+                        )
+                    }, onClick = { curOnSelect(ServerConfigAction.Share(-1)) })
+
+                    DropdownMenuItem(text = {
+                        Text("编辑")
+                    }, leadingIcon = {
+                        Icon(
+                            modifier = iconModifier,
+                            painter = painterResource(id = R.drawable.ic_edit_black_24dp),
+                            contentDescription = null,
+                        )
+                    }, onClick = { curOnSelect(ServerConfigAction.Edit) })
+
+                    DropdownMenuItem(text = {
+                        Text("删除")
+                    }, leadingIcon = {
+                        Icon(
+                            modifier = iconModifier,
+                            painter = painterResource(id = R.drawable.ic_delete_black_24dp),
+                            contentDescription = null,
+                        )
+                    }, onClick = { curOnSelect(ServerConfigAction.Edit) })
+                }
+            }
             // share
-            IconButton(onClick = {
+            /*IconButton(onClick = {
                 curOnSelect(ServerConfigAction.Share(-1))
             }) {
                 Icon(
@@ -237,7 +329,7 @@ fun ServerConfigItem(
                     painter = painterResource(id = R.drawable.ic_delete_black_24dp),
                     contentDescription = null
                 )
-            }
+            }*/
         }
     }
 }
