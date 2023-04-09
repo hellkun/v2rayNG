@@ -71,7 +71,9 @@ fun UserAssetActivityScreen(onBack: () -> Unit) {
                     Icon(Icons.Default.ArrowBack, contentDescription = null)
                 }
             }, actions = {
-                AddGeoFileButton()
+                AddGeoFileButton {
+                    refreshTrigger = !refreshTrigger
+                }
 
                 DownloadGeoFilesButton {
                     refreshTrigger = !refreshTrigger
@@ -107,13 +109,16 @@ fun UserAssetActivityScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun AddGeoFileButton() {
+private fun AddGeoFileButton(onSuccess: () -> Unit) {
+    val curOnSuccess by rememberUpdatedState(newValue = onSuccess)
+
     val context = LocalContext.current
     val launcher =
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
                 try {
                     copyFile(context, Utils.userAssetPath(context), uri)
+                    curOnSuccess()
                 } catch (e: Exception) {
                     context.toast(R.string.toast_asset_copy_failed)
                 }
