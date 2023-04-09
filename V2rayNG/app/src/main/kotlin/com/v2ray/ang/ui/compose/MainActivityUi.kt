@@ -226,6 +226,7 @@ fun ServerConfigItem(
                 .height(dimensionResource(id = R.dimen.server_height))
                 .clickable {
                     curOnSelect(ServerConfigAction.Apply)
+                    showMenu = false
                 },
             verticalAlignment = Alignment.CenterVertically,
         ) {
