@@ -8,6 +8,7 @@ import android.provider.OpenableColumns
 import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -41,7 +42,7 @@ import java.text.DateFormat
 import java.util.*
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun UserAssetActivityScreen(onBack: () -> Unit) {
     val curOnBack by rememberUpdatedState(newValue = onBack)
@@ -72,7 +73,7 @@ fun UserAssetActivityScreen(onBack: () -> Unit) {
                 }
             }, actions = {
                 AddGeoFileButton {
-                    refreshTrigger = !refreshTrigger
+                    assetFiles.add(it)
                 }
 
                 DownloadGeoFilesButton {
@@ -86,10 +87,15 @@ fun UserAssetActivityScreen(onBack: () -> Unit) {
         }
 
         LazyColumn(modifier = Modifier.padding(padding)) {
-            itemsIndexed(assetFiles) { index, file ->
+            itemsIndexed(
+                assetFiles,
+                key = { _, file ->
+                    file.path
+                },
+            ) { index, file ->
                 ListItem(headlineContent = {
                     Text(file.name)
-                }, supportingContent = {
+                }, modifier = Modifier.animateItemPlacement(), supportingContent = {
                     Text(
                         "${
                             file.length().toTrafficString()
@@ -97,19 +103,30 @@ fun UserAssetActivityScreen(onBack: () -> Unit) {
                     )
                 }, trailingContent = {
                     // 外部文件，可以删除
-                    if (geoFiles.contains(file.name)) {
-                        IconButton(onClick = { /*TODO*/ }) {
+                    if (!geoFiles.contains(file.name)) {
+                        val scope = rememberCoroutineScope()
+                        IconButton(onClick = {
+                            scope.launch(Dispatchers.IO) {
+                                file.delete()
+                            }
+
+                            assetFiles.remove(file)
+                        }) {
                             Icon(Icons.Default.Delete, contentDescription = null)
                         }
                     }
                 })
+
+                if (index < assetFiles.size - 1) {
+                    Divider()
+                }
             }
         }
     }
 }
 
 @Composable
-private fun AddGeoFileButton(onSuccess: () -> Unit) {
+private fun AddGeoFileButton(onSuccess: (File) -> Unit) {
     val curOnSuccess by rememberUpdatedState(newValue = onSuccess)
 
     val context = LocalContext.current
@@ -117,8 +134,8 @@ private fun AddGeoFileButton(onSuccess: () -> Unit) {
         rememberLauncherForActivityResult(contract = ActivityResultContracts.GetContent()) { uri ->
             if (uri != null) {
                 try {
-                    copyFile(context, Utils.userAssetPath(context), uri)
-                    curOnSuccess()
+                    val file = copyFile(context, Utils.userAssetPath(context), uri)
+                    curOnSuccess(file)
                 } catch (e: Exception) {
                     context.toast(R.string.toast_asset_copy_failed)
                 }
@@ -145,7 +162,7 @@ private fun AddGeoFileButton(onSuccess: () -> Unit) {
     }
 }
 
-private fun copyFile(context: Context, extDir: String, uri: Uri): String {
+private fun copyFile(context: Context, extDir: String, uri: Uri): File {
     val cursorName = try {
         context.contentResolver.query(uri, null, null, null, null)?.use {
             if (it.moveToFirst()) {
@@ -164,7 +181,7 @@ private fun copyFile(context: Context, extDir: String, uri: Uri): String {
             context.toast(R.string.toast_success)
         }
     }
-    return targetFile.path
+    return targetFile
 }
 
 @Composable
