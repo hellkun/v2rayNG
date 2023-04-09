@@ -93,10 +93,6 @@
             android:exported="false" />
 
         <activity
-            android:name=".ui.SubEditActivity"
-            android:exported="false"
-            android:theme="@style/AppThemeDayNight.NoActionBar" />
-        <activity
             android:name=".ui.ScScannerActivity"
             android:exported="false" />
         <activity
