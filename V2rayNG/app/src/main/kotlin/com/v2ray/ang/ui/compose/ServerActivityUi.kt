@@ -65,10 +65,7 @@ fun ServerActivityScreen(type: EConfigType, onBack: () -> Unit) {
                     Text("保存")
                 }
             }
-
         }
-
-
     }
 }
 
@@ -252,39 +249,42 @@ private fun ColumnScope.TlsFields(contents: Map<FieldContentType, MutableState<S
         onSelect = { selectedTls = it })
     Spacer(modifier = Modifier.height(16.dp))
 
-    ServerConfigField(
-        type = FieldContentType.SNI, content = contents[FieldContentType.SNI]!!
-    )
-    Spacer(modifier = Modifier.height(16.dp))
+    if (selectedTls.isNotBlank()) {
+        ServerConfigField(
+            type = FieldContentType.SNI, content = contents[FieldContentType.SNI]!!
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-    DropdownText(title = stringResource(id = R.string.server_lab_stream_fingerprint),
-        selected = selectedFingerprint,
-        selectables = selectableFingerprint,
-        onSelect = { selectedFingerprint = it })
-    Spacer(modifier = Modifier.height(16.dp))
+        DropdownText(title = stringResource(id = R.string.server_lab_stream_fingerprint),
+            selected = selectedFingerprint,
+            selectables = selectableFingerprint,
+            onSelect = { selectedFingerprint = it })
+        Spacer(modifier = Modifier.height(16.dp))
 
-    DropdownText(title = stringResource(id = R.string.server_lab_stream_alpn),
-        selected = selectedAlpn,
-        selectables = selectableAlpn,
-        onSelect = { selectedAlpn = it })
-    Spacer(modifier = Modifier.height(16.dp))
+        DropdownText(title = stringResource(id = R.string.server_lab_stream_alpn),
+            selected = selectedAlpn,
+            selectables = selectableAlpn,
+            onSelect = { selectedAlpn = it })
+        Spacer(modifier = Modifier.height(16.dp))
 
-    AllowInsecureSwitch()
-    Spacer(modifier = Modifier.height(16.dp))
+        if (selectedTls == "tls") {
+            AllowInsecureSwitch()
+        } else {
+            ServerConfigField(
+                type = FieldContentType.PublicKey, content = contents[FieldContentType.PublicKey]!!
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-    ServerConfigField(
-        type = FieldContentType.PublicKey, content = contents[FieldContentType.PublicKey]!!
-    )
-    Spacer(modifier = Modifier.height(16.dp))
+            ServerConfigField(
+                type = FieldContentType.ShortId, content = contents[FieldContentType.ShortId]!!
+            )
+            Spacer(modifier = Modifier.height(16.dp))
 
-    ServerConfigField(
-        type = FieldContentType.ShortId, content = contents[FieldContentType.ShortId]!!
-    )
-    Spacer(modifier = Modifier.height(16.dp))
-
-    ServerConfigField(
-        type = FieldContentType.SpiderX, content = contents[FieldContentType.SpiderX]!!
-    )
+            ServerConfigField(
+                type = FieldContentType.SpiderX, content = contents[FieldContentType.SpiderX]!!
+            )
+        }
+    }
 }
 
 @Composable
