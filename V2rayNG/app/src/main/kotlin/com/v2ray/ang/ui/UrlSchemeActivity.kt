@@ -3,20 +3,24 @@ package com.v2ray.ang.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import androidx.activity.compose.setContent
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Scaffold
 import com.google.zxing.WriterException
 import com.v2ray.ang.R
-import com.v2ray.ang.databinding.ActivityLogcatBinding
 import com.v2ray.ang.extension.toast
 import com.v2ray.ang.util.AngConfigManager
 
 class UrlSchemeActivity : BaseActivity() {
-    private lateinit var binding: ActivityLogcatBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityLogcatBinding.inflate(layoutInflater)
-        val view = binding.root
-        setContentView(view)
+        
+        setContent { 
+            Scaffold {
+                CircularProgressIndicator()
+            }
+        }
 
         var shareUrl: String = ""
         try {
